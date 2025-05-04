@@ -1,0 +1,1514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOC Analyst Mini-Game</title>
+    <style>
+        :root {
+            --primary-color: #1a1a2e;
+            --secondary-color: #16213e;
+            --accent-color: #0f3460;
+            --highlight-color: #e94560;
+            --text-color: #f8f8f8;
+            --success-color: #4caf50;
+            --error-color: #f44336;
+            --neutral-color: #2c3e50;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--primary-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background-color: var(--secondary-color);
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .score-panel {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .score {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .take-quiz-btn {
+            background-color: var(--highlight-color);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.3s ease;
+        }
+
+        .take-quiz-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .dashboard {
+            background-color: var(--secondary-color);
+            border-radius: 8px;
+            padding: 20px;
+            flex: 1;
+            position: relative;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .dashboard-title {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 24px;
+            color: var(--highlight-color);
+        }
+
+        .alerts-container {
+            overflow-y: auto;
+            max-height: 400px;
+            padding: 10px;
+            background-color: var(--accent-color);
+            border-radius: 4px;
+        }
+
+        .alert-item {
+            background-color: var(--neutral-color);
+            margin-bottom: 10px;
+            padding: 15px;
+            border-radius: 4px;
+            border-left: 4px solid var(--highlight-color);
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; transform: translateY(0); }
+            to { opacity: 0; transform: translateY(-10px); }
+        }
+
+        .alert-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .alert-time {
+            color: #aaa;
+            font-size: 12px;
+        }
+
+        .alert-severity {
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            background-color: var(--highlight-color);
+        }
+
+        .alert-content {
+            margin-bottom: 15px;
+        }
+
+        .alert-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .action-btn {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s ease;
+        }
+
+        .legitimate-btn {
+            background-color: #4caf50;
+            color: white;
+        }
+
+        .malicious-btn {
+            background-color: #f44336;
+            color: white;
+        }
+
+        .action-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        .popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .popup.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .popup-content {
+            background-color: var(--secondary-color);
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 500px;
+            width: 90%;
+            position: relative;
+            animation: scaleIn 0.3s ease;
+        }
+
+        @keyframes scaleIn {
+            from { transform: scale(0.9); }
+            to { transform: scale(1); }
+        }
+
+        .close-popup {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .feedback {
+            text-align: center;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+
+        .feedback.correct {
+            background-color: rgba(76, 175, 80, 0.2);
+            color: #4caf50;
+        }
+
+        .feedback.incorrect {
+            background-color: rgba(244, 67, 54, 0.2);
+            color: #f44336;
+        }
+
+        .quiz-container {
+            text-align: center;
+        }
+
+        .quiz-question {
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .quiz-option {
+            background-color: var(--accent-color);
+            border: none;
+            padding: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            text-align: left;
+            color: var(--text-color);
+            transition: all 0.2s ease;
+        }
+
+        .quiz-option:hover {
+            background-color: var(--highlight-color);
+        }
+
+        .quiz-option.selected {
+            background-color: var(--highlight-color);
+        }
+
+        .quiz-nav {
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .quiz-nav button {
+            background-color: var(--highlight-color);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .intro-screen {
+            text-align: center;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .intro-screen h1 {
+            color: var(--highlight-color);
+            margin-bottom: 20px;
+        }
+
+        .intro-screen p {
+            margin-bottom: 15px;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+
+        .start-btn {
+            background-color: var(--highlight-color);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 18px;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .start-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 0;
+            color: #aaa;
+        }
+
+        .results-screen {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .results-screen h2 {
+            color: var(--highlight-color);
+            margin-bottom: 20px;
+        }
+
+        .final-score {
+            font-size: 48px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+
+        .results-message {
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+
+        .play-again-btn {
+            background-color: var(--highlight-color);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.3s ease;
+        }
+
+        .play-again-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .alert-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="intro-screen" class="intro-screen">
+    
+        <h1>SOC Analyst Mini-Game</h1>
+        <p>In this game, you will step into the shoes of a Security Operations Center (SOC) Analyst.</p>
+        <p>As a SOC Analyst, your job is to review security alerts and determine if they are <strong>legitimate</strong> (false alarms) or <strong>malicious</strong> (real threats).</p>
+        <p>You'll have 60 seconds to review as many alerts as you can. Make decisions quickly but carefully!</p>
+        <p>You'll earn 10 points for each correct classification and lose 10 points for each incorrect one.</p>
+        <h3>Game made by Miguel Hernandez</h3>
+        <button id="start-game" class="start-btn">Start Game</button>
+        <button id="take-quiz" class="take-quiz-btn">Take Quiz</button>
+    </div>
+
+    <div id="game-screen" style="display: none;">
+        <header>
+            <div class="score-panel">
+                <div>Score: <span id="score" class="score">0</span></div>
+                <div>Time: <span id="timer" class="score">60</span>s</div>
+            </div>
+        </header>
+
+        <main>
+            <div class="dashboard">
+                <h2 class="dashboard-title">SIEM Dashboard</h2>
+                <div id="alerts-container" class="alerts-container">
+                    <div class="empty-state">
+                        <p>Waiting for alerts...</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="results-screen" class="results-screen" style="display: none;">
+        <h2>Game Over!</h2>
+        <p>Your final score:</p>
+        <div id="final-score" class="final-score">0</div>
+        <p id="results-message" class="results-message">You're just getting started as a SOC Analyst!</p>
+        <button id="play-again" class="play-again-btn">Play Again</button>
+    </div>
+
+    <div id="feedback-popup" class="popup">
+        <div class="popup-content">
+            <div id="feedback-message" class="feedback"></div>
+            <div style="text-align: center; margin-top: 10px;">
+                <button id="next-alert" class="action-btn legitimate-btn">Continue</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="quiz-popup" class="popup">
+        <div class="popup-content">
+            <button class="close-quiz-popup close-popup">&times;</button>
+            <div class="quiz-container">
+                <h3 style="margin-bottom: 20px;">Insider Threat Quiz</h3>
+                <div id="quiz-question" class="quiz-question"></div>
+                <div id="quiz-options" class="quiz-options"></div>
+                <div id="quiz-feedback" class="feedback" style="display: none;"></div>
+                <div class="quiz-nav">
+                    <button id="quiz-next" style="margin: 0 auto;">Next Question</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        const gameState = {
+            score: 0,
+            timeRemaining: 60,
+            alertInterval: null,
+            timerInterval: null,
+            isGameRunning: false,
+            currentQuizQuestion: 0,
+            selectedQuizOption: null
+        };
+
+        // Alert data
+        const alerts = [
+            {
+                id: 1,
+                title: "Multiple Failed Login Attempts",
+                description: "User 'jsmith' had 10 failed login attempts to HR system in the last 5 minutes.",
+                severity: "High",
+                time: "Just now",
+                isLegitimate: false,
+                feedback: "Correct! Multiple failed login attempts in a short time period often indicate a brute force attack."
+            },
+            {
+                id: 2,
+                title: "Unusual Login Location",
+                description: "User 'dchen' logged in from Nigeria at 2:15 AM local time. User is based in New York.",
+                severity: "Medium",
+                time: "2 min ago",
+                isLegitimate: false,
+                feedback: "Correct! Logins from unusual locations outside business hours are suspicious and may indicate compromised credentials."
+            },
+            {
+                id: 3,
+                title: "USB Device Connected",
+                description: "USB storage device connected to finance department workstation FIN-PC-045.",
+                severity: "Low",
+                time: "5 min ago",
+                isLegitimate: true,
+                feedback: "Correct! While USB devices can be used maliciously, this alert alone isn't necessarily malicious - finance staff might need to transfer files."
+            },
+            {
+                id: 4,
+                title: "Outbound Data Transfer",
+                description: "Workstation DEV-PC-012 is transferring 1.2GB of data to an external FTP server.",
+                severity: "High",
+                time: "1 min ago",
+                isLegitimate: false,
+                feedback: "Correct! Large data transfers to external servers could indicate data exfiltration - a serious security concern."
+            },
+            {
+                id: 5,
+                title: "New Admin Account Created",
+                description: "A new admin account 'system_backup' was created outside of change management process.",
+                severity: "High",
+                time: "10 min ago",
+                isLegitimate: false,
+                feedback: "Correct! Creating unauthorized admin accounts is highly suspicious and may indicate an attacker gaining privileged access."
+            },
+            {
+                id: 6,
+                title: "Antivirus Update",
+                description: "Scheduled antivirus definition update completed on 50 workstations.",
+                severity: "Low",
+                time: "15 min ago",
+                isLegitimate: true,
+                feedback: "Correct! Routine antivirus updates are legitimate maintenance activities."
+            },
+            {
+                id: 7,
+                title: "Password Reset",
+                description: "User 'mwilliams' reset their password through the self-service portal.",
+                severity: "Low",
+                time: "3 min ago",
+                isLegitimate: true,
+                feedback: "Correct! Password resets through approved self-service portals are legitimate security activities."
+            },
+            {
+                id: 8,
+                title: "Firewall Rule Change",
+                description: "Firewall rule modified to allow inbound connections on port 4444.",
+                severity: "Medium",
+                time: "7 min ago",
+                isLegitimate: false,
+                feedback: "Correct! Unauthorized firewall changes, especially ones that open unusual ports, are suspicious."
+            },
+            {
+                id: 9,
+                title: "VPN Connection",
+                description: "User 'rjones' connected to VPN from authorized home IP address.",
+                severity: "Low",
+                time: "20 min ago",
+                isLegitimate: true,
+                feedback: "Correct! VPN connections from known/authorized locations are typically legitimate."
+            },
+            {
+                id: 10,
+                title: "Off-hours System Access",
+                description: "User 'asmith' accessed the financial database at 1:30 AM on Saturday.",
+                severity: "Medium",
+                time: "30 min ago",
+                isLegitimate: false,
+                feedback: "Correct! Access to sensitive systems outside business hours, especially on weekends, is suspicious."
+            },
+            {
+                id: 11,
+                title: "Software Installation",
+                description: "Standard productivity software installed on HR-PC-023 by IT admin.",
+                severity: "Low",
+                time: "45 min ago",
+                isLegitimate: true,
+                feedback: "Correct! Software installations by authorized IT staff are typically legitimate maintenance activities."
+            },
+            {
+                id: 12,
+                title: "Email with Suspicious Attachment",
+                description: "User 'klee' received email with 'invoice.exe' attachment from unknown sender.",
+                severity: "High",
+                time: "4 min ago",
+                isLegitimate: false,
+                feedback: "Correct! Executable file attachments from unknown senders are highly suspicious and likely malicious."
+            },
+            {
+                id: 13,
+                title: "Unusual File Access",
+                description: "User 'jdoe' accessed sensitive files in the finance folder at 3 AM.",
+                severity: "High",
+                time: "50 min ago",
+                isLegitimate: false,
+                feedback: "Correct! Unusual access to sensitive files outside business hours is suspicious and may indicate insider threat."
+            },
+            {
+                id: 14,
+                title: "System Performance Alert",
+                description: "Server 'DB-SERVER-01' CPU usage exceeded 90% for 10 minutes.",
+                severity: "Medium",
+                time: "1 hour ago",
+                isLegitimate: true,
+                feedback: "Correct! High CPU usage alerts are routine and often indicate system load or maintenance activities."
+            },
+            {
+                id: 15,
+                title: "Phishing Email Reported",
+                description: "User 'bthompson' reported phishing email with link to fake login page.",
+                severity: "High",
+                time: "2 hours ago",
+                isLegitimate: false,
+                feedback: "Correct! Phishing emails are a common threat and should be reported for further investigation."
+            },
+            { 
+                id: 16,
+                title: "Scheduled Backup Completed",
+                description: "Daily backup of all servers completed successfully.",
+                severity: "Low",
+                time: "3 hours ago",
+                isLegitimate: true,
+                feedback: "Correct! Scheduled backups are routine maintenance activities."
+            },
+            {
+                id: 17,
+                title: "Unauthorized Software Detected",
+                description: "Unapproved software 'Game.exe' detected on user workstation.",
+                severity: "Medium",
+                time: "4 hours ago",
+                isLegitimate: false,
+                feedback: "Correct! Unauthorized software can pose security risks and should be investigated."
+            },
+            {
+                id: 18,
+                title: "Network Scan Detected",
+                description: "Multiple port scans detected from external IP address.",
+                severity: "High",
+                time: "5 hours ago",
+                isLegitimate: false,
+                feedback: "Correct! Port scans from external sources are often precursors to attacks and should be investigated."
+            },
+            {
+                id: 19,
+                title: "User Account Lockout",
+                description: "User 'jdoe' account locked after 8 failed login attempts.",
+                severity: "Medium",
+                time: "6 hours ago",
+                isLegitimate: false,
+                feedback: "Correct! Account lockouts due to multiple failed attempts may indicate a brute force attack."
+            },
+            {
+                id: 20,
+                title: "System Update Notification",
+                description: "Notification for system updates available for installation.",
+                severity: "Low",
+                time: "7 hours ago",
+                isLegitimate: true,
+                feedback: "Correct! System update notifications are routine maintenance activities."
+            },
+          
+    {
+        id: 21,
+        title: "Multiple Login Attempts from Different IPs",
+        description: "User 'snguyen' attempted to log in from 5 different IP addresses within 2 minutes.",
+        severity: "High",
+        time: "Just now",
+        isLegitimate: false,
+        feedback: "Correct! Rapid logins from multiple IPs can indicate account compromise attempts or session hijacking."
+    },
+    {
+        id: 22,
+        title: "New Device Login",
+        description: "User 'tpatel' logged into the internal dashboard from an unrecognized laptop.",
+        severity: "Medium",
+        time: "1 min ago",
+        isLegitimate: false,
+        feedback: "Correct! Logins from unknown devices should be verified to ensure the account hasn't been compromised."
+    },
+    {
+        id: 23,
+        title: "VPN Connected from Mobile Device",
+        description: "User 'lharris' accessed the corporate VPN from a registered mobile phone.",
+        severity: "Low",
+        time: "3 min ago",
+        isLegitimate: true,
+        feedback: "Correct! VPN access from known mobile devices is usually legitimate if previously approved."
+    },
+    {
+        id: 24,
+        title: "Abnormal File Deletion",
+        description: "User 'mbrown' deleted over 1,000 files from the shared drive in under 1 minute.",
+        severity: "High",
+        time: "5 min ago",
+        isLegitimate: false,
+        feedback: "Correct! Rapid mass deletion of files may indicate ransomware activity or malicious insider behavior."
+    },
+    {
+        id: 25,
+        title: "Access Request to Confidential Folder",
+        description: "User 'achang' requested access to the legal department's restricted folder.",
+        severity: "Medium",
+        time: "10 min ago",
+        isLegitimate: true,
+        feedback: "Correct! Access requests through proper channels may be legitimate unless paired with suspicious behavior."
+    },
+    {
+        id: 26,
+        title: "Unscheduled Remote Desktop Session",
+        description: "Remote desktop session started from 'ADMIN-PC' to 'DBSERVER-02' without a scheduled task.",
+        severity: "High",
+        time: "8 min ago",
+        isLegitimate: false,
+        feedback: "Correct! Unscheduled RDP sessions, especially between privileged machines, can indicate lateral movement."
+    },
+    {
+        id: 27,
+        title: "Cloud Storage Upload",
+        description: "User 'jmiller' uploaded 500MB of documents to Google Drive.",
+        severity: "Medium",
+        time: "12 min ago",
+        isLegitimate: false,
+        feedback: "Correct! Uploading sensitive documents to personal cloud services may violate policy and indicate data leakage."
+    },
+    {
+        id: 28,
+        title: "Self-Service Group Membership Change",
+        description: "User 'aroberts' added themselves to the 'ProjectX-Finance' group via portal.",
+        severity: "Medium",
+        time: "14 min ago",
+        isLegitimate: true,
+        feedback: "Correct! Self-service group changes may be legitimate if properly logged and approved."
+    },
+    {
+        id: 29,
+        title: "Old Password Used for Login",
+        description: "User 'fwhite' attempted to log in using a password that was changed 30 days ago.",
+        severity: "Low",
+        time: "16 min ago",
+        isLegitimate: true,
+        feedback: "Correct! Users sometimes forget recent password changes; this behavior is not necessarily malicious."
+    },
+    {
+        id: 30,
+        title: "Attempted Email Forwarding Rule",
+        description: "User 'nmartin' tried to create a rule to forward all company emails to a personal account.",
+        severity: "High",
+        time: "20 min ago",
+        isLegitimate: false,
+        feedback: "Correct! Email auto-forwarding to personal accounts is a red flag for data exfiltration and must be blocked."
+    },
+    {
+    id: 31,
+    title: "Self-Service Group Membership Change",
+    description: "User 'aroberts' added themselves to the 'ProjectX-Finance' group via portal.",
+    severity: "Medium",
+    time: "15 min ago",
+    isLegitimate: false,
+    feedback: "Correct! Unauthorized privilege escalation through group changes may indicate insider threat or misuse of access."
+},
+{
+    id: 32,
+    title: "Suspicious Executable Launched",
+    description: "Executable 'update123.exe' launched from downloads folder on workstation DEV-PC-099.",
+    severity: "High",
+    time: "18 min ago",
+    isLegitimate: false,
+    feedback: "Correct! Executables launched from user download folders are commonly used to deliver malware."
+},
+{
+    id: 33,
+    title: "Multiple Failed VPN Connections",
+    description: "User 'cwilson' had 7 failed VPN login attempts in 3 minutes.",
+    severity: "High",
+    time: "22 min ago",
+    isLegitimate: false,
+    feedback: "Correct! Repeated failed VPN logins could be a brute-force attempt."
+},
+{
+    id: 34,
+    title: "File Shared Externally",
+    description: "Confidential document shared externally by 'sscott' via OneDrive.",
+    severity: "Medium",
+    time: "25 min ago",
+    isLegitimate: false,
+    feedback: "Correct! Sharing sensitive files externally can indicate data leakage or policy violations."
+},
+{
+    id: 35,
+    title: "New Software Executed",
+    description: "User 'kjames' executed newly installed application 'SpeedBoostPlus'.",
+    severity: "Low",
+    time: "28 min ago",
+    isLegitimate: true,
+    feedback: "Correct! Not all new software is malicious, but it should be monitored."
+},
+{
+    id: 36,
+    title: "Account Created During Off Hours",
+    description: "New user account 'tempuser1' created at 2:47 AM by unknown admin.",
+    severity: "High",
+    time: "30 min ago",
+    isLegitimate: false,
+    feedback: "Correct! Off-hours account creation without documentation is suspicious."
+},
+{
+    id: 37,
+    title: "Login Success After Multiple Failures",
+    description: "User 'jwright' succeeded in login after 6 failed attempts.",
+    severity: "Medium",
+    time: "32 min ago",
+    isLegitimate: false,
+    feedback: "Correct! Successful login after failures may indicate a compromised password."
+},
+{
+    id: 38,
+    title: "Encrypted Traffic to Unknown IP",
+    description: "Workstation ENG-PC-202 initiated encrypted communication to an unknown external IP.",
+    severity: "High",
+    time: "35 min ago",
+    isLegitimate: false,
+    feedback: "Correct! Unexpected encrypted traffic to unknown destinations may indicate command-and-control activity."
+},
+{
+    id: 39,
+    title: "Malware Signature Detected",
+    description: "Antivirus on IT-PC-08 flagged 'Trojan.Generic.abc' during routine scan.",
+    severity: "High",
+    time: "40 min ago",
+    isLegitimate: false,
+    feedback: "Correct! Detection of malware signatures should always be investigated immediately."
+},
+{
+    id: 40,
+    title: "Admin Login from Public WiFi",
+    description: "Admin 'djohnson' logged in from a Starbucks WiFi network.",
+    severity: "Medium",
+    time: "45 min ago",
+    isLegitimate: false,
+    feedback: "Correct! Admin access from public networks can expose credentials and sensitive data."
+},
+{
+    id: 41,
+    title: "Privileged Access to HR Files",
+    description: "User 'tmorgan' accessed multiple confidential HR files without a ticket.",
+    severity: "High",
+    time: "50 min ago",
+    isLegitimate: false,
+    feedback: "Correct! Unjustified access to sensitive files is a common sign of insider threat."
+},
+{
+    id: 42,
+    title: "System Reboot Outside Patch Window",
+    description: "Server 'APP-01' rebooted at 1:00 AM outside scheduled maintenance window.",
+    severity: "Medium",
+    time: "55 min ago",
+    isLegitimate: false,
+    feedback: "Correct! Unscheduled reboots can be indicative of compromise or misconfiguration."
+},
+{
+    id: 43,
+    title: "Mass Email Sent",
+    description: "User 'rlee' sent 2,000+ emails within 10 minutes to external contacts.",
+    severity: "Medium",
+    time: "1 hour ago",
+    isLegitimate: false,
+    feedback: "Correct! Sudden mass email activity may suggest account compromise or spamming."
+},
+{
+    id: 44,
+    title: "Multi-Factor Authentication Enabled",
+    description: "User 'hparker' enabled MFA for their account.",
+    severity: "Low",
+    time: "1 hour 10 min ago",
+    isLegitimate: true,
+    feedback: "Correct! Enabling MFA is a good security practice."
+},
+{
+    id: 45,
+    title: "Suspicious Email Domain",
+    description: "Email from 'security-alerts@micr0s0ft-support.com' delivered to 3 users.",
+    severity: "High",
+    time: "1 hour 20 min ago",
+    isLegitimate: false,
+    feedback: "Correct! Typosquatting domains are often used in phishing attacks."
+},
+{
+    id: 46,
+    title: "Password Expiry Notification",
+    description: "User 'mpatel' received a password expiration alert 5 days before due date.",
+    severity: "Low",
+    time: "1 hour 30 min ago",
+    isLegitimate: true,
+    feedback: "Correct! Password expiry alerts are a normal part of security hygiene."
+},
+{
+    id: 47,
+    title: "PowerShell Script Executed",
+    description: "User 'xzhang' executed PowerShell script from Downloads folder.",
+    severity: "High",
+    time: "1 hour 40 min ago",
+    isLegitimate: false,
+    feedback: "Correct! PowerShell execution from user space is a common tactic in post-exploitation."
+},
+{
+    id: 47,
+    title: "Excessive File Access Attempts",
+    description: "User 'tlee' attempted to open 300+ restricted files in under 5 minutes.",
+    severity: "High",
+    time: "2 hours ago",
+    isLegitimate: false,
+    feedback: "Correct! High-volume access attempts may indicate reconnaissance or automated tools."
+},
+{
+    id: 48,
+    title: "Internal IP Port Scan",
+    description: "Workstation DEV-PC-014 scanning multiple internal IPs on port 22.",
+    severity: "High",
+    time: "2 hours 10 min ago",
+    isLegitimate: false,
+    feedback: "Correct! Lateral scanning attempts inside the network can be early signs of internal compromise."
+},
+{
+    id: 49,
+    title: "Printer Firmware Update",
+    description: "Scheduled firmware update completed on PRINTER-03.",
+    severity: "Low",
+    time: "2 hours 20 min ago",
+    isLegitimate: true,
+    feedback: "Correct! Regular firmware updates for hardware are routine and expected."
+},
+{
+    id: 50,
+    title: "Access to Deprecated System",
+    description: "User 'ekhan' accessed legacy HRIS system no longer in production.",
+    severity: "Medium",
+    time: "2 hours 30 min ago",
+    isLegitimate: false,
+    feedback: "Correct! Accessing decommissioned systems may indicate misuse or recon."
+},
+{
+    id: 51,
+    title: "Service Account Used Interactively",
+    description: "Service account 'backup_agent' used to log into workstation UI.",
+    severity: "High",
+    time: "2 hours 45 min ago",
+    isLegitimate: false,
+    feedback: "Correct! Service accounts should not be used interactively and may suggest compromise."
+},
+{
+    id: 52,
+    title: "High Bandwidth Usage",
+    description: "Marketing-PC-010 used 12GB of bandwidth in under 30 minutes.",
+    severity: "Medium",
+    time: "3 hours ago",
+    isLegitimate: false,
+    feedback: "Correct! Sudden spikes in bandwidth usage should be investigated for possible exfiltration."
+},
+{
+    id: 53,
+    title: "Security Software Disabled",
+    description: "Endpoint protection disabled manually on workstation FIN-PC-022.",
+    severity: "High",
+    time: "3 hours 10 min ago",
+    isLegitimate: false,
+    feedback: "Correct! Disabling security software is a key indicator of malicious activity."
+},
+{
+    id: 54,
+    title: "Remote Access Tool Installed",
+    description: "Remote access software 'AnyDesk' installed on workstation by user 'rsmith'.",
+    severity: "High",
+    time: "3 hours 30 min ago",
+    isLegitimate: false,
+    feedback: "Correct! Installation of remote access tools should be authorized and monitored."
+},
+{
+    id: 55,
+    title: "Group Policy Updated",
+    description: "IT admin pushed a new Group Policy Object for password complexity.",
+    severity: "Low",
+    time: "4 hours ago",
+    isLegitimate: true,
+    feedback: "Correct! Group policy changes by IT are normal if properly documented."
+},
+{
+    id: 56,
+    title: "Admin Tools Downloaded",
+    description: "User 'hkim' downloaded 'Mimikatz.zip' from external site.",
+    severity: "High",
+    time: "4 hours 15 min ago",
+    isLegitimate: false,
+    feedback: "Correct! Downloading offensive security tools internally is a red flag."
+},
+{
+    id: 57,
+    title: "Shared Account Usage Detected",
+    description: "Multiple users accessed the same admin account within 10 minutes.",
+    severity: "Medium",
+    time: "4 hours 30 min ago",
+    isLegitimate: false,
+    feedback: "Correct! Shared accounts violate policy and make tracking actions difficult."
+},
+{
+    id: 58,
+    title: "Data Access Spike",
+    description: "Admin User 'ajones' accessed & transferred 5,000+ customer records in under 20 minutes.",
+    severity: "High",
+    time: "5 hours ago",
+    isLegitimate: false,
+    feedback: "Correct! Rapid access of large datasets and sending them to an external server may suggest data breach or insider threat."
+},
+{
+    id: 59,
+    title: "Security Patch Deployed",
+    description: "Admin User 'tnguyen' deployed a Microsoft Windows KB update to all domain-joined systems.",
+    severity: "Medium",
+    time: "3 hours 45 min ago",
+    isLegitimate: true,
+    feedback: "Correct! Deploying official patches is a routine and important part of vulnerability management."
+},
+{
+    id: 60,
+    title: "SIEM Alert Triage Completed",
+    description: "Admin User 'kmiller' reviewed and closed 3 false-positive alerts from the SIEM dashboard.",
+    severity: "Low",
+    time: "1 hour 5 min ago",
+    isLegitimate: true,
+    feedback: "Correct! Triage and tuning false positives are key parts of an analyst's job to maintain alert quality."
+},
+{
+    id: 61,
+    title: "User Access Reviewed",
+    description: "Admin User 'dsmith' completed a quarterly access review for the HR team’s cloud-based file storage.",
+    severity: "Low",
+    time: "5 hours 20 min ago",
+    isLegitimate: true,
+    feedback: "Correct! Reviewing access permissions helps enforce the principle of least privilege."
+},
+{
+    id: 62,
+    title: "New Employee Onboarded",
+    description: "Admin User 'lgarcia' provisioned accounts and assigned correct roles in Active Directory and Okta for a new marketing hire.",
+    severity: "Low",
+    time: "2 hours 55 min ago",
+    isLegitimate: true,
+    feedback: "Correct! Proper onboarding with role-based access control is essential for secure operations."
+},
+{
+    id: 63,
+    title: "Backups Verified",
+    description: "Admin User 'rpatel' confirmed daily backup jobs completed successfully for all critical Virtual Machines.",
+    severity: "Low",
+    time: "6 hours 0 min ago",
+    isLegitimate: true,
+    feedback: "Correct! Regular backup verification is a standard operational best practice."
+},
+{
+    id: 65,
+    title: "SSL Certificate Renewed",
+    description: "Admin User 'mwhite' renewed expiring SSL cert for the internal GitLab server.",
+    severity: "Low",
+    time: "4 hours 45 min ago",
+    isLegitimate: true,
+    feedback: "Correct! Keeping SSL/TLS certificates up to date prevents outages and security warnings."
+}, {
+    id: 66,
+    title: "Firewall Rule Updated",
+    description: "Admin User 'jleon' modified outbound rules to allow internal application traffic through TCP port 8443.",
+    severity: "Low",
+    time: "2 hours 10 min ago",
+    isLegitimate: true,
+    feedback: "Correct! Updating firewall rules to support authorized applications is a normal system admin task."
+},
+{
+    id: 67,
+    title: "Multi-Factor Auth Enabled",
+    description: "Admin User 'kmorgan' enabled MFA for all admin accounts in the Azure portal.",
+    severity: "Medium",
+    time: "1 hour 48 min ago",
+    isLegitimate: true,
+    feedback: "Correct! Enabling MFA is a key step in securing privileged access."
+},
+{
+    id: 68,
+    title: "Security Awareness Training Logged",
+    description: "Admin User 'mcooper' completed annual security awareness training via LMS platform.",
+    severity: "Low",
+    time: "5 hours 5 min ago",
+    isLegitimate: true,
+    feedback: "Correct! Staying up to date with security training is a standard compliance requirement."
+},
+{
+    id: 69,
+    title: "Password Policy Strengthened",
+    description: "Admin User 'jparker' modified password policy to require special characters and 12+ characters minimum.",
+    severity: "Low",
+    time: "3 hours 17 min ago",
+    isLegitimate: true,
+    feedback: "Correct! Strengthening password requirements helps defend against brute-force attacks."
+},
+{
+    id: 70,
+    title: "Inactive Accounts Disabled",
+    description: "Admin User 'bnguyen' disabled 6 user accounts that had been inactive for 90+ days.",
+    severity: "Low",
+    time: "2 hours 10 min ago",
+    isLegitimate: true,
+    feedback: "Correct! Removing stale accounts reduces potential attack surface."
+},
+{
+    id: 71,
+    title: "Internal Vulnerability Scan Completed",
+    description: "Admin User 'sgomez' ran a scheduled scan using Qualys to identify missing patches in production servers.",
+    severity: "Medium",
+    time: "4 hours 50 min ago",
+    isLegitimate: true,
+    feedback: "Correct! Regular internal vulnerability scanning is part of proactive security hygiene."
+},
+{
+    id: 72,
+    title: "System Logs Archived",
+    description: "Admin User 'aevans' archived 90 days of endpoint logs for long-term retention compliance.",
+    severity: "Low",
+    time: "3 hours 33 min ago",
+    isLegitimate: true,
+    feedback: "Correct! Archiving logs helps meet retention and audit requirements."
+},
+{
+    id: 73,
+    title: "Service Account Rotation",
+    description: "User 'cwright' rotated service account credentials for automated backup scripts.",
+    severity: "Low",
+    time: "1 hour 15 min ago",
+    isLegitimate: true,
+    feedback: "Correct! Regularly rotating service account credentials is a best practice for minimizing risk."
+}, {
+    id: 74,
+    title: "Group Policy Updated",
+    description: "Admin User 'rjohnson' updated Group Policy to enforce screen lock after 10 minutes of inactivity.",
+    severity: "Low",
+    time: "2 hours 35 min ago",
+    isLegitimate: true,
+    feedback: "Correct! Enforcing idle lockout policies improves endpoint security."
+},
+{
+    id: 75,
+    title: "Security Patch Deployed",
+    description: "User 'jkim' deployed a critical security patch to all Windows servers.",
+    severity: "Medium",
+    time: "1 hour 50 min ago",
+    isLegitimate: true,
+    feedback: "Correct! Timely deployment of security patches is essential for protecting systems."
+},{
+    id: 74,
+    title: "Unusual File Transfer to External IP",
+    description: "User 'dlee' transferred 5GB of data to an unknown external IP.",
+    severity: "High",
+    time: "2 hours 58 min ago",
+    isLegitimate: false,
+    feedback: "Correct! Large transfers to unknown IPs often indicate data exfiltration."
+},
+{
+    id: 75,
+    title: "Firewall Rules Audited",
+    description: "User 'jkim' reviewed and updated perimeter firewall rules as part of monthly audit.",
+    severity: "Low",
+    time: "3 hours 20 min ago",
+    isLegitimate: true,
+    feedback: "Correct! Regular firewall audits help maintain a secure network posture."
+},
+{
+    id: 76,
+    title: "Suspicious PowerShell Execution",
+    description: "User 'tpatel' ran a base64-encoded PowerShell script with elevated privileges.",
+    severity: "High",
+    time: "1 hour 42 min ago",
+    isLegitimate: false,
+    feedback: "Correct! Obfuscated PowerShell usage is a common tactic for malicious activity."
+},
+{
+    id: 77,
+    title: "SIEM Alert Triage Completed",
+    description: "Admin User 'lward' completed triage on 37 alerts flagged by the SIEM system.",
+    severity: "Medium",
+    time: "2 hours 1 min ago",
+    isLegitimate: true,
+    feedback: "Correct! Timely triage of security alerts is critical for fast response."
+},
+{
+    id: 78,
+    title: "Unauthorized Access Attempt",
+    description: "User 'unknown' failed 14 login attempts against a domain controller.",
+    severity: "High",
+    time: "50 min ago",
+    isLegitimate: false,
+    feedback: "Correct! Multiple failed login attempts could indicate brute-force activity."
+},
+{
+    id: 79,
+    title: "Security Patch Applied",
+    description: "Admin User 'rstevens' applied latest Microsoft security patch KB5031210.",
+    severity: "Low",
+    time: "3 hours 5 min ago",
+    isLegitimate: true,
+    feedback: "Correct! Keeping systems patched helps reduce vulnerabilities."
+},
+{
+    id: 80,
+    title: "Encrypted Messaging App Installed",
+    description: "User 'dwhite' installed Signal on a company-issued laptop.",
+    severity: "Medium",
+    time: "1 hour 22 min ago",
+    isLegitimate: false,
+    feedback: "Correct! Installing unapproved communication tools can violate corporate policy."
+},
+{
+    id: 81,
+    title: "New User Provisioned",
+    description: "User 'admin' created an account for new hire 'kturner' in Active Directory.",
+    severity: "Low",
+    time: "4 hours 41 min ago",
+    isLegitimate: true,
+    feedback: "Correct! Onboarding new users is a standard administrative task."
+}
+
+];
+
+            
+        
+
+        // Quiz data
+        const quizQuestions = [
+            {
+                question: "Which of the following is an example of an insider threat?",
+                options: [
+                    "A hacker in Russia breaking into a system",
+                    "An employee stealing data from their company",
+                    "A virus from a USB stick",
+                    "A phishing email"
+                ],
+                correctAnswer: 1,
+                explanation: "An insider threat comes from within the organization - like an employee misusing their access to steal data."
+            },
+            {
+                question: "Why is monitoring USB activity important?",
+                options: [
+                    "To track printer usage",
+                    "It slows down the computer",
+                    "USBs can be used to steal or install files",
+                    "They are fun to use"
+                ],
+                correctAnswer: 2,
+                explanation: "USB devices can be used to exfiltrate sensitive data or introduce malware into systems."
+            },
+            {
+                question: "Which of these would MOST LIKELY alert a SOC analyst?",
+                options: [
+                    "Someone watching Netflix",
+                    "Login attempts from 3 countries in 5 minutes",
+                    "Opening a PDF",
+                    "Emailing a photo to a friend"
+                ],
+                correctAnswer: 1,
+                explanation: "Multiple logins from different countries in a short time period is highly suspicious and indicates potential credential theft."
+            }
+        ];
+
+        // DOM Elements
+        const introScreen = document.getElementById('intro-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const resultsScreen = document.getElementById('results-screen');
+        const startBtn = document.getElementById('start-game');
+        const scoreElement = document.getElementById('score');
+        const timerElement = document.getElementById('timer');
+        const alertsContainer = document.getElementById('alerts-container');
+        const takeQuizBtn = document.getElementById('take-quiz');
+        const feedbackPopup = document.getElementById('feedback-popup');
+        const feedbackMessage = document.getElementById('feedback-message');
+        const nextAlertBtn = document.getElementById('next-alert');
+        const quizPopup = document.getElementById('quiz-popup');
+        const quizQuestion = document.getElementById('quiz-question');
+        const quizOptions = document.getElementById('quiz-options');
+        const quizNext = document.getElementById('quiz-next');
+        const quizFeedback = document.getElementById('quiz-feedback');
+        const closeQuizPopup = document.querySelector('.close-quiz-popup');
+        const finalScoreElement = document.getElementById('final-score');
+        const resultsMessageElement = document.getElementById('results-message');
+        const playAgainBtn = document.getElementById('play-again');
+
+        // Helper functions
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function getRandomAlert() {
+            return alerts[Math.floor(Math.random() * alerts.length)];
+        }
+
+        function updateScore(points) {
+            gameState.score += points;
+            scoreElement.textContent = gameState.score;
+        }
+
+        function updateTimer() {
+            timerElement.textContent = gameState.timeRemaining;
+        }
+
+        function showFeedback(message, isCorrect) {
+            feedbackMessage.textContent = message;
+            feedbackMessage.className = isCorrect ? 'feedback correct' : 'feedback incorrect';
+            feedbackPopup.classList.add('active');
+        }
+
+        function hideFeedback() {
+            feedbackPopup.classList.remove('active');
+        }
+
+        function createAlertElement(alert) {
+            const alertElement = document.createElement('div');
+            alertElement.className = 'alert-item';
+            alertElement.dataset.id = alert.id;
+
+            alertElement.innerHTML = `
+                <div class="alert-header">
+                    <h3>${alert.title}</h3>
+                    <span class="alert-time">${alert.time}</span>
+                </div>
+                <div class="alert-severity">Severity: ${alert.severity}</div>
+                <div class="alert-content">
+                    <p>${alert.description}</p>
+                </div>
+                <div class="alert-actions">
+                    <button class="action-btn legitimate-btn" data-action="legitimate">Legitimate</button>
+                    <button class="action-btn malicious-btn" data-action="malicious">Malicious</button>
+                </div>
+            `;
+
+            return alertElement;
+        }
+
+        function handleAlertAction(alert, action) {
+            let isCorrect = false;
+            let feedback = '';
+
+            if ((action === 'legitimate' && alert.isLegitimate) || 
+                (action === 'malicious' && !alert.isLegitimate)) {
+                isCorrect = true;
+                updateScore(10);
+                feedback = alert.feedback;
+            } else {
+                isCorrect = false;
+                updateScore(-10);
+                feedback = alert.isLegitimate ? 
+                    "Incorrect. This is actually a legitimate activity." : 
+                    "Incorrect. This is actually a malicious/suspicious activity.";
+            }
+
+            showFeedback(feedback, isCorrect);
+        }
+
+        function displayNewAlert() {
+            if (!gameState.isGameRunning) return;
+
+            const alert = getRandomAlert();
+            const alertElement = createAlertElement(alert);
+            
+            // Clear empty state if needed
+            if (alertsContainer.querySelector('.empty-state')) {
+                alertsContainer.innerHTML = '';
+            }
+            
+            // Add new alert at the top
+            alertsContainer.prepend(alertElement);
+            
+            // Add event listeners to buttons
+            const btns = alertElement.querySelectorAll('.action-btn');
+            btns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    if (!gameState.isGameRunning) return;
+                    
+                    const action = this.dataset.action;
+                    handleAlertAction(alert, action);
+                    // Remove alert after action
+                    alertsContainer.removeChild(alertElement);
+                    
+                    // Disable buttons
+                    btns.forEach(b => b.disabled = true);
+                });
+            });
+        }
+
+        function startGame() {
+            introScreen.style.display = 'none';
+            gameScreen.style.display = 'block';
+            resultsScreen.style.display = 'none';
+            
+            gameState.score = 0;
+            gameState.timeRemaining = 60;
+            gameState.isGameRunning = true;
+            
+            scoreElement.textContent = gameState.score;
+            updateTimer();
+            
+            alertsContainer.innerHTML = '<div class="empty-state"><p>Waiting for alerts...</p></div>';
+            
+            // Display first alert
+            setTimeout(displayNewAlert, 1000);
+            
+            // Set up the timer
+            gameState.timerInterval = setInterval(() => {
+                gameState.timeRemaining--;
+                updateTimer();
+                
+                if (gameState.timeRemaining <= 0) {
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        function endGame() {
+            gameState.isGameRunning = false;
+            clearInterval(gameState.timerInterval);
+            
+            finalScoreElement.textContent = gameState.score;
+            
+            // Set result message based on score
+            if (gameState.score >= 50) {
+                resultsMessageElement.textContent = "Outstanding! You'd make an excellent SOC Analyst!";
+            } else if (gameState.score >= 20) {
+                resultsMessageElement.textContent = "Good job! You have solid security instincts.";
+            } else if (gameState.score >= 0) {
+                resultsMessageElement.textContent = "Nice try! With some practice, you'll improve your security skills.";
+            } else {
+                resultsMessageElement.textContent = "Keep learning! Security analysis takes practice.";
+            }
+            
+            gameScreen.style.display = 'none';
+            resultsScreen.style.display = 'block';
+        }
+
+        function showQuiz() {
+            gameState.currentQuizQuestion = 0;
+            gameState.selectedQuizOption = null;
+            quizFeedback.style.display = 'none';
+            loadQuizQuestion();
+            quizPopup.classList.add('active');
+        }
+
+        function loadQuizQuestion() {
+            const question = quizQuestions[gameState.currentQuizQuestion];
+            quizQuestion.textContent = question.question;
+            
+            // Clear previous options
+            quizOptions.innerHTML = '';
+            
+            // Create option buttons
+            question.options.forEach((option, index) => {
+                const optionBtn = document.createElement('button');
+                optionBtn.className = 'quiz-option';
+                optionBtn.textContent = option;
+                optionBtn.dataset.index = index;
+                
+                optionBtn.addEventListener('click', function() {
+                    // Remove selected class from all options
+                    document.querySelectorAll('.quiz-option').forEach(btn => {
+                        btn.classList.remove('selected');
+                    });
+                    
+                    // Add selected class to clicked option
+                    this.classList.add('selected');
+                    gameState.selectedQuizOption = parseInt(this.dataset.index);
+                    
+                    // Show feedback
+                    const isCorrect = gameState.selectedQuizOption === question.correctAnswer;
+                    quizFeedback.textContent = isCorrect ? 
+                        "Correct! " + question.explanation : 
+                        "Incorrect. " + question.explanation;
+                    quizFeedback.className = isCorrect ? 'feedback correct' : 'feedback incorrect';
+                    quizFeedback.style.display = 'block';
+                    
+                    // Update score
+                    if (gameState.isGameRunning) {
+                        updateScore(isCorrect ? 10 : -10);
+                    }
+                });
+                
+                quizOptions.appendChild(optionBtn);
+            });
+            
+            // Update next button text based on question number
+            if (gameState.currentQuizQuestion === quizQuestions.length - 1) {
+                quizNext.textContent = 'Finish Quiz';
+            } else {
+                quizNext.textContent = 'Next Question';
+            }
+        }
+
+        // Event Listeners
+        startBtn.addEventListener('click', startGame);
+        
+        nextAlertBtn.addEventListener('click', function() {
+            hideFeedback();
+            displayNewAlert();
+        });
+        
+        takeQuizBtn.addEventListener('click', function() {
+            showQuiz();
+        });
+        
+        quizNext.addEventListener('click', function() {
+            // If no option selected, do nothing
+            if (gameState.selectedQuizOption === null) return;
+            
+            gameState.currentQuizQuestion++;
+            gameState.selectedQuizOption = null;
+            
+            if (gameState.currentQuizQuestion < quizQuestions.length) {
+                loadQuizQuestion();
+                quizFeedback.style.display = 'none';
+            } else {
+                quizPopup.classList.remove('active');
+            }
+        });
+        
+        closeQuizPopup.addEventListener('click', function() {
+            quizPopup.classList.remove('active');
+        });
+        
+        playAgainBtn.addEventListener('click', startGame);
+        
+        document.querySelector('.close-popup').addEventListener('click', hideFeedback);
+    </script>
+</body>
+</html>
